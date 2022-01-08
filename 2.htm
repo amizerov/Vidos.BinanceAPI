@@ -1,0 +1,45 @@
+<style>
+    .symbols {
+        width: 12em;
+        height: 30em;
+        line-height: 2em;
+        border: 1px solid #ccc;
+        padding: 10px;
+        overflow: scroll;
+        overflow-x: hidden;
+    }
+
+        .symbols li {
+            border-top: 1px solid #ccc;
+            cursor: pointer;
+            padding-left: 5px;
+        }
+
+            .symbols li:hover {
+                background-color: lightgray;
+            }
+
+    .selected {
+        background-color: lightgray;
+    }
+</style>
+<div class="info"><ul class="symbols" /></div>
+<script src="https://code.jquery.com/jquery-1.7.2.min.js"></script>
+<script>
+    var url = "https://api.binance.com/api/v1/exchangeInfo";
+    $.getJSON(url, function (data) {
+
+        var info = JSON.parse(JSON.stringify(data));
+
+        $.each(info.symbols, function (i, symInfo) {
+            var sym = symInfo.symbol;
+            var sli = "<li id=id" + i + " onclick=\"sel(" + i + ")\">" + sym + "</li>";
+            $(".symbols").append(sli);
+        });
+
+    });
+    function sel(i) {
+        $(".symbols li").removeClass("selected");
+        $("#id" + i).addClass("selected");
+    }
+</script>
