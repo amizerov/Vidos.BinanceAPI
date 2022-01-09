@@ -70,27 +70,27 @@
     </table>
 </center>
 
-<!-- Подключение библиотеки расширения для JsvaScript -->
+<!-- jQuery: подключение библиотеки расширения для JsvaScript -->
 <script src="https://code.jquery.com/jquery-1.7.2.min.js"></script>
 
-<!-- Получение данных через API Binance -->
+<!-- Фильтр символов -->
 <script>
-    var binaSocket = null;
-    var url = "https://api.binance.com/api/v1/exchangeInfo";
-    $.getJSON(url, function (data) {
-
-        var info = JSON.parse(JSON.stringify(data));
-        var arrs = info.symbols.sort((a, b) => {
-            return a.filters[0].maxPrice * a.filters[2].maxQty > b.filters[0].maxPrice * b.filters[2].maxQty;
-        });
-
-        $.each(arrs, function (i, symInfo) {
-            var sym = symInfo.symbol;
-            var sli = "<li id=id" + i + " onclick=\"sel(" + i + ", '" + sym + "')\">" + sym + "</li>";
-            $(".symbols").append(sli);
-        });
-
+    $(".filterSymbol").on("keyup", function (ev) {
+        var texto = $(this).val();
+        filtro(texto);
     });
+
+    function filtro(texto) {
+        $(".info ul li").hide().filter(function () {
+            var item = $(this).text();
+            var padrao = new RegExp(texto, "i");
+            return padrao.test(item);
+        }).closest("li").show();
+    }
+</script>
+
+<!-- Выбор символа -->
+<script>
     function sel(i, symbol) {
         $("#symbol").html(symbol);
         $(".symbols li").removeClass("selected");
@@ -98,6 +98,36 @@
         ddd(symbol);
         bbb(symbol);
     }
+</script>
+
+<!-- API Binance: Список пар - получение данных -->
+<script>
+    var url = "https://api.binance.com/api/v1/exchangeInfo";
+
+    //Обращение за данными на сервер Бинанс
+    $.getJSON(url, function (data) {
+
+        //Парсинг - преобразование полученных данных в объект
+        var info = JSON.parse(JSON.stringify(data));
+
+        //Попытка отсортировать пары по ликвидности
+        var arrs = info.symbols.sort((a, b) => {
+            return a.filters[0].maxPrice * a.filters[2].maxQty >
+                   b.filters[0].maxPrice * b.filters[2].maxQty;
+        });
+
+        //Заполнение списка символов в листбокс
+        $.each(arrs, function (i, symInfo) {
+            var sym = symInfo.symbol;
+            var sli = "<li id=id" + i + " onclick=\"sel(" + i + ", '" + sym + "')\">" + sym + "</li>";
+            $(".symbols").append(sli);
+        });
+
+    });
+</script>
+
+<!-- API Binance: Свечи - получение данных -->
+<script>
     function ddd(sym) {
         var url = "https://api.binance.com/api/v3/klines?symbol=" + sym + "&interval=1m&limit=10";
         $.getJSON(url, function (data) {
@@ -110,8 +140,10 @@
     }
 </script>
 
-<!-- Получение данных через Сокет API Binance -->
+<!-- API Binance Socket: Последняя свеча - получение данных -->
 <script>
+    var binaSocket = null;
+
     function bbb(sym) {
         var s = sym.toLowerCase();
         var wsUrl = "wss://stream.binance.com:9443/ws/" + s + "@kline_1m";
@@ -141,22 +173,6 @@
                 setChart();
             }
         };
-    }
-</script>
-
-<!-- Фильтр символов -->
-<script>
-    $(".filterSymbol").on("keyup", function (ev) {
-        var texto = $(this).val();
-        filtro(texto);
-    });
-
-    function filtro(texto) {
-        $(".info ul li").hide().filter(function () {
-            var item = $(this).text();
-            var padrao = new RegExp(texto, "i");
-            return padrao.test(item);
-        }).closest("li").show();
     }
 </script>
 
