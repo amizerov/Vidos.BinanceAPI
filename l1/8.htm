@@ -110,7 +110,7 @@
         //Парсинг - преобразование полученных данных в объект
         var info = JSON.parse(JSON.stringify(data));
 
-        //Попытка отсортировать пары по ликвидности
+        //Неудачная попытка отсортировать пары по ликвидности
         var arrs = info.symbols.sort((a, b) => {
             return a.filters[0].maxPrice * a.filters[2].maxQty >
                    b.filters[0].maxPrice * b.filters[2].maxQty;
