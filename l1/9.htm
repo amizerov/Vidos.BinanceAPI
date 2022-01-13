@@ -1,10 +1,10 @@
-<!-- Получаю уже, предварительно отсортированный 
-  -- список торговых пар со своего сервера, 
-  -- где данные получаются с Binance и анализ
-  -- проводился на языке C#
+<!-- РџРѕР»СѓС‡Р°СЋ СѓР¶Рµ, РїСЂРµРґРІР°СЂРёС‚РµР»СЊРЅРѕ РѕС‚СЃРѕСЂС‚РёСЂРѕРІР°РЅРЅС‹Р№ 
+  -- СЃРїРёСЃРѕРє С‚РѕСЂРіРѕРІС‹С… РїР°СЂ СЃРѕ СЃРІРѕРµРіРѕ СЃРµСЂРІРµСЂР°, 
+  -- РіРґРµ РґР°РЅРЅС‹Рµ РїРѕР»СѓС‡Р°СЋС‚СЃСЏ СЃ Binance Рё Р°РЅР°Р»РёР·
+  -- РїСЂРѕРІРѕРґРёР»СЃСЏ РЅР° СЏР·С‹РєРµ C#
 ------------------------------------------------------>
 
-<!-- Стили -->
+<!-- РЎС‚РёР»Рё -->
 <style>
     .symbols {
         width: 10em;
@@ -47,7 +47,7 @@
         }
 </style>
 
-<!-- Разметка -->
+<!-- Р Р°Р·РјРµС‚РєР° -->
 <center>
     <table class="BinaTable" border="1">
         <tr class="head"><td>Symbol</td><td>Open / Close</td><td>High / Low</td><td>Volume / Close time</td></tr>
@@ -76,10 +76,10 @@
     </table>
 </center>
 
-<!-- jQuery: подключение библиотеки расширения для JsvaScript -->
+<!-- jQuery: РїРѕРґРєР»СЋС‡РµРЅРёРµ Р±РёР±Р»РёРѕС‚РµРєРё СЂР°СЃС€РёСЂРµРЅРёСЏ РґР»СЏ JsvaScript -->
 <script src="https://code.jquery.com/jquery-1.7.2.min.js"></script>
 
-<!-- Фильтр символов -->
+<!-- Р¤РёР»СЊС‚СЂ СЃРёРјРІРѕР»РѕРІ -->
 <script>
     $(".filterSymbol").on("keyup", function (ev) {
         var texto = $(this).val();
@@ -95,7 +95,7 @@
     }
 </script>
 
-<!-- Выбор символа -->
+<!-- Р’С‹Р±РѕСЂ СЃРёРјРІРѕР»Р° -->
 <script>
     function sel(i, symbol) {
         $("#symbol").html(symbol);
@@ -106,17 +106,17 @@
     }
 </script>
 
-<!-- API Mizer: Список пар - получение данных -->
+<!-- API Mizer: РЎРїРёСЃРѕРє РїР°СЂ - РїРѕР»СѓС‡РµРЅРёРµ РґР°РЅРЅС‹С… -->
 <script>
     var url = "https://cryptoalert.mizerov.com/api/Products/1";
 
-    //Обращение за данными на свой сервер
+    //РћР±СЂР°С‰РµРЅРёРµ Р·Р° РґР°РЅРЅС‹РјРё РЅР° СЃРІРѕР№ СЃРµСЂРІРµСЂ
     $.getJSON(url, function (data) {
 
-        //Парсинг - преобразование полученных данных в объект
+        //РџР°СЂСЃРёРЅРі - РїСЂРµРѕР±СЂР°Р·РѕРІР°РЅРёРµ РїРѕР»СѓС‡РµРЅРЅС‹С… РґР°РЅРЅС‹С… РІ РѕР±СЉРµРєС‚
         var paras = JSON.parse(JSON.stringify(data));
 
-        //Заполнение списка символов в листбокс
+        //Р—Р°РїРѕР»РЅРµРЅРёРµ СЃРїРёСЃРєР° СЃРёРјРІРѕР»РѕРІ РІ Р»РёСЃС‚Р±РѕРєСЃ
         $.each(paras, function (i, symInfo) {
             var sym = symInfo.symbol;
             var sli = "<li id=id" + i + " onclick=\"sel(" + i + ", '" + sym + "')\">" + sym + "</li>";
@@ -126,7 +126,7 @@
     });
 </script>
 
-<!-- API Binance: Свечи - получение данных -->
+<!-- API Binance: РЎРІРµС‡Рё - РїРѕР»СѓС‡РµРЅРёРµ РґР°РЅРЅС‹С… -->
 <script>
     function ddd(sym) {
         var url = "https://api.binance.com/api/v3/klines?symbol=" + sym + "&interval=1m&limit=10";
@@ -140,7 +140,7 @@
     }
 </script>
 
-<!-- API Binance Socket: Последняя свеча - получение данных -->
+<!-- API Binance Socket: РџРѕСЃР»РµРґРЅСЏСЏ СЃРІРµС‡Р° - РїРѕР»СѓС‡РµРЅРёРµ РґР°РЅРЅС‹С… -->
 <script>
     var binaSocket = null;
 
@@ -176,13 +176,13 @@
     }
 </script>
 
-<!-- График: подключение библиотек для финансового графика -->
+<!-- Р“СЂР°С„РёРє: РїРѕРґРєР»СЋС‡РµРЅРёРµ Р±РёР±Р»РёРѕС‚РµРє РґР»СЏ С„РёРЅР°РЅСЃРѕРІРѕРіРѕ РіСЂР°С„РёРєР° -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@^3"></script>
 <script src="https://cdn.jsdelivr.net/npm/luxon@^2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@^1"></script>
 <script src="chartjs/chartjs-chart-financial.js"></script>
 
-<!-- График: подготовка данных -->
+<!-- Р“СЂР°С„РёРє: РїРѕРґРіРѕС‚РѕРІРєР° РґР°РЅРЅС‹С… -->
 <script>
     var ohlc = [];
     var vols = [];
@@ -214,7 +214,7 @@
     }
 </script>
 
-<!-- График: отрисовка -->
+<!-- Р“СЂР°С„РёРє: РѕС‚СЂРёСЃРѕРІРєР° -->
 <script>
     var csChart = null;
     var voChart = null;
