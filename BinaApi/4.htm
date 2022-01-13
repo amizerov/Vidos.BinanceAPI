@@ -1,0 +1,124 @@
+<!-- Получить последние 50 свечей выбранной пары
+  -- и отобразить в виде финансового графика 
+-------------------------------------------------->
+
+<!-- Стили -->
+<style>
+    .symbols {
+        width: 12em;
+        height: 40em;
+        line-height: 2em;
+        border: 1px solid #ccc;
+        padding: 10px;
+        overflow: scroll;
+        overflow-x: hidden;
+    }
+
+        .symbols li {
+            border-top: 1px solid #ccc;
+            cursor: pointer;
+            padding-left: 5px;
+        }
+
+            .symbols li:hover {
+                background-color: lightgray;
+            }
+
+    .selected {
+        background-color: lightgray;
+    }
+</style>
+
+<!-- Разметка -->
+<center>
+    <table border="1" width="80%">
+        <tr>
+            <td width="1%" valign="top"><div class="info"><ul class="symbols" /></div></td>
+            <td><canvas id="csChart" width="550" height="400"></canvas></td>
+            <td width="1%" valign="top">
+                <div id="opn"></div>
+                <div id="hig"></div>
+                <div id="low"></div>
+                <div id="cls"></div>
+            </td>
+        </tr>
+    </table>
+</center>
+
+<!-- Получение данных через API Binance -->
+<script src="https://code.jquery.com/jquery-1.7.2.min.js"></script>
+<script>
+    var url = "https://api.binance.com/api/v1/exchangeInfo";
+    $.getJSON(url, function (data) {
+
+        var info = JSON.parse(JSON.stringify(data));
+
+        $.each(info.symbols, function (i, symInfo) {
+            var sym = symInfo.symbol;
+            var sli = "<li id=id" + i + " onclick=\"sel(" + i + ", '" + sym + "')\">" + sym + "</li>";
+            $(".symbols").append(sli);
+        });
+
+    });
+    function sel(i, symbol) {
+        $(".symbols li").removeClass("selected");
+        $("#id" + i).addClass("selected");
+        ddd(symbol);
+    }
+    function ddd(sym) {
+        var url = "https://api.binance.com/api/v3/klines?symbol=" + sym + "&interval=15m&limit=50";
+        $.getJSON(url, function (data) {
+            var Candles = JSON.parse(JSON.stringify(data));
+            setCandleStickChart(sym, Candles);
+            var LastCandle = Candles[0];
+            $("#opn").html(LastCandle[1]);
+            $("#hig").html(LastCandle[2]);
+            $("#low").html(LastCandle[3]);
+            $("#cls").html(LastCandle[4]);
+        });
+    }
+</script>
+
+<!-- График -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@^3"></script>
+<script src="https://cdn.jsdelivr.net/npm/luxon@^2"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@^1"></script>
+<script src="chartjs/chartjs-chart-financial.js"></script>
+<script>
+    var csChart = null;
+    function setCandleStickChart(symbol, candles) {
+
+        const ctx = document.getElementById('csChart').getContext('2d');
+
+        var data = [];
+        var lbls = [];
+        $.each(candles, function (i, candle) {
+            var t = candle[0];
+            var d = new Date(t);
+            var s = d.toLocaleTimeString();
+            data.push(
+                {
+                    x: d.valueOf(),
+                    o: candle[1],
+                    h: candle[2],
+                    l: candle[3],
+                    c: candle[4]
+                }
+            );
+            lbls.push(s)
+        });
+
+        if (csChart != null) csChart.destroy();
+        csChart = new Chart(ctx, {
+            type: 'candlestick',
+            data: {
+                labels: lbls,
+                datasets: [{
+                    label: symbol,
+                    data: data,
+                }]
+            },
+            options: {}
+        });
+    }
+</script>
