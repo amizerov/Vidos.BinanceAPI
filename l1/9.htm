@@ -8,7 +8,7 @@
 <style>
     .symbols {
         width: 10em;
-        height: 40em;
+        height: 31em;
         line-height: 2em;
         border: 1px solid #ccc;
         padding: 10px;
@@ -31,7 +31,7 @@
     }
 
     .BinaTable {
-        width: 823px;
+        width: 1000px;
     }
 
         .BinaTable td {
@@ -45,6 +45,57 @@
             font: bold;
             background-color: lightgray;
         }
+
+    .btnPanel {
+        padding-top: 10px;
+    }
+
+        .btnPanel div {
+            display: inline-block;
+        }
+
+    .bntInterval {
+    }
+    .bntInterval div {
+        width: 50px;
+        border: outset;
+        display: inline-block;
+        cursor: pointer;
+    }
+
+        .bntInterval div:hover {
+            background-color: lightgray;
+        }
+
+    .pressed {
+        background-color: lightgray;
+        border: inset!important;
+    }
+
+    .Limit {
+        float: right;
+    }
+
+        .Limit div {
+            width: 33px;
+            border: outset;
+            float: right;
+            cursor: pointer;
+            text-align:center;
+        }
+
+            .Limit div:hover {
+                background-color: lightgray;
+            }
+
+    #lim {
+        width: 50px;
+        float: right;
+        padding-bottom: 5px;
+        margin-right: 5px;
+        margin-left: 5px;
+        text-align: center;
+    }
 </style>
 
 <!-- Разметка -->
@@ -69,8 +120,23 @@
         <tr>
             <td colspan="3" valign="top">
                 <center><h1 id="symbol" /></center>
-                <canvas id="csChart" width="500" height="400"></canvas>
-                <canvas id="voChart" width="500" height="100"></canvas>
+                <canvas id="csChart" width="800" height="350"></canvas>
+                <canvas id="voChart" width="800" height="80"></canvas>
+                <div class="btnPanel">
+                    <div class="bntInterval">
+                        <div id="b1" onclick="bntInt_Clicked(1)">1m</div>
+                        <div id="b3" onclick="bntInt_Clicked(3)">3m</div>
+                        <div id="b5" onclick="bntInt_Clicked(5)">5m</div>
+                        <div id="b15" onclick="bntInt_Clicked(15)">15m</div>
+                        <div id="b30" onclick="bntInt_Clicked(30)">30m</div>
+                        <div id="b60" onclick="bntInt_Clicked(60)">1h</div>
+                    </div>
+                    <div class="Limit">
+                        <div id="plus5" onclick="setLim(5)">+</div>
+                        <input id="lim" value="15" />
+                        <div id="minus5" onclick="setLim(-5)">-</div>
+                    </div>
+                </div>
             </td>
         </tr>
     </table>
@@ -78,6 +144,27 @@
 
 <!-- jQuery: подключение библиотеки расширения для JsvaScript -->
 <script src="https://code.jquery.com/jquery-1.7.2.min.js"></script>
+<script>
+    var CurrentSymbol = "BTCUSDT";
+    var CurrentInterval = "1m";
+    var CurrentLimit = parseInt($("#lim").val());
+
+    $(() => { sel(0, CurrentSymbol); $("#b1").addClass("pressed"); });
+
+    function setLim(d) {
+        if (CurrentLimit >= 50 && d > 0 || CurrentLimit <= 5 && d < 0) return;
+        CurrentLimit += parseInt(d);
+        $("#lim").val(CurrentLimit);
+        ddd(CurrentSymbol, CurrentInterval, CurrentLimit);
+    }
+
+    function bntInt_Clicked(n) {
+        $(".bntInterval div").removeClass("pressed");
+        $("#b" + n).addClass("pressed");
+        CurrentInterval = n < 60 ? n + "m" : "1h";
+        ddd(CurrentSymbol, CurrentInterval, CurrentLimit);
+    }
+</script>
 
 <!-- Фильтр символов -->
 <script>
@@ -98,10 +185,11 @@
 <!-- Выбор символа -->
 <script>
     function sel(i, symbol) {
+        CurrentSymbol = symbol;
         $("#symbol").html(symbol);
         $(".symbols li").removeClass("selected");
         $("#id" + i).addClass("selected");
-        ddd(symbol);
+        ddd(CurrentSymbol, CurrentInterval, CurrentLimit);
         bbb(symbol);
     }
 </script>
@@ -128,14 +216,16 @@
 
 <!-- API Binance: Свечи - получение данных -->
 <script>
-    function ddd(sym) {
-        var url = "https://api.binance.com/api/v3/klines?symbol=" + sym + "&interval=1m&limit=10";
+    function ddd(sym, inl, lim) {
+        var url = "https://api.binance.com/api/v3/klines?"
+                    + "symbol=" + sym + "&interval=" + inl + "&limit=" + lim;
+
         $.getJSON(url, function (data) {
             var Candles = JSON.parse(JSON.stringify(data));
             setCandleStickChart(Candles);
             var LastCandle = Candles[0];
-            $("#opncls").html(LastCandle[1] + "<br />" + LastCandle[4]);
-            $("#higlow").html(LastCandle[2] + "<br />" + LastCandle[3]);
+            $("#opncls").html(LastCandle[1] + " / " + LastCandle[4]);
+            $("#higlow").html(LastCandle[2] + " / " + LastCandle[3]);
         });
     }
 </script>
@@ -156,13 +246,13 @@
             var obj = JSON.parse(event.data);
             if (obj.error) return;
             var k = obj.k;
-            $("#opncls").html(k.o + "<br />" + k.c);
-            $("#higlow").html(k.h + "<br />" + k.l);
-            $("#volclt").html(k.v + "<br />" + (new Date(k.T + 1)).toLocaleTimeString().substr(0, 5));
+            $("#opncls").html(k.o + " / " + k.c);
+            $("#higlow").html(k.h + " / " + k.l);
+            $("#volclt").html(k.v + " / " + (new Date(k.T + 1)).toLocaleTimeString().substr(0, 5));
 
             var i = ohlc.length - 1;
             if (ohlc[i].x <= Date.now() + 1000) {
-                ddd(sym);
+                ddd(CurrentSymbol, CurrentInterval, CurrentLimit);
             }
             else {
                 ohlc[i].c = k.c;
