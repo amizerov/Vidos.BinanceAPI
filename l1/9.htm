@@ -96,12 +96,25 @@
         margin-left: 5px;
         text-align: center;
     }
+    select {
+        font: 18px arial, veranda;
+        padding: 5px;
+    }
 </style>
 
 <!-- Разметка -->
 <center>
     <table class="BinaTable" border="1">
-        <tr class="head"><td>Symbol</td><td>Open / Close</td><td>High / Low</td><td>Volume / Close time</td></tr>
+        <tr class="head">
+            <td>
+                <select id="Exchange" onchange="ExChan()">
+                    <option>Binance</option>
+                    <option>Kucoin</option>
+                    <option>Huobi</option>
+                </select>
+            </td>
+            <td>Open / Close</td><td>High / Low</td><td>Volume / Close time</td>
+        </tr>
         <tr>
             <td rowspan="2" valign="top">
                 <input class="filterSymbol" />
@@ -149,7 +162,24 @@
     var CurrentInterval = "1m";
     var CurrentLimit = parseInt($("#lim").val());
 
-    $(() => { sel(0, CurrentSymbol); $("#b1").addClass("pressed"); });
+    $(() => {
+        getSymbols(1);
+        sel(0, CurrentSymbol);
+        $("#b1").addClass("pressed");
+    });
+
+    function ExChan() {
+        var e = 1, ex = $('#Exchange option:selected').text();
+        switch (ex) {
+            case "Binance":
+                e = 1; break;
+            case "Kucoin":
+                e = 2; break;
+            default:
+                e = 3;
+        }
+        getSymbols(e);
+    }
 
     function setLim(d) {
         if (CurrentLimit >= 50 && d > 0 || CurrentLimit <= 5 && d < 0) return;
@@ -196,22 +226,26 @@
 
 <!-- API Mizer: Список пар - получение данных -->
 <script>
-    var url = "https://cryptoalert.mizerov.com/api/Products/1";
+    function getSymbols(ex) {
+        var url = "https://cryptoalert.mizerov.com/api/Products/" + ex;
 
-    //Обращение за данными на свой сервер
-    $.getJSON(url, function (data) {
+        //Обращение за данными на свой сервер
+        $.getJSON(url, function (data) {
 
-        //Парсинг - преобразование полученных данных в объект
-        var paras = JSON.parse(JSON.stringify(data));
+            //Парсинг - преобразование полученных данных в объект
+            var paras = JSON.parse(JSON.stringify(data));
 
-        //Заполнение списка символов в листбокс
-        $.each(paras, function (i, symInfo) {
-            var sym = symInfo.symbol;
-            var sli = "<li id=id" + i + " onclick=\"sel(" + i + ", '" + sym + "')\">" + sym + "</li>";
-            $(".symbols").append(sli);
+            //Очистить список
+            $(".symbols").html("");
+
+            //Заполнение списка символов в листбокс
+            $.each(paras, function (i, symInfo) {
+                var sym = symInfo.symbol;
+                var sli = "<li id=id" + i + " onclick=\"sel(" + i + ", '" + sym + "')\">" + sym + "</li>";
+                $(".symbols").append(sli);
+            });
         });
-
-    });
+    }
 </script>
 
 <!-- API Binance: Свечи - получение данных -->
