@@ -185,14 +185,14 @@
         if (CurrentLimit >= 50 && d > 0 || CurrentLimit <= 5 && d < 0) return;
         CurrentLimit += parseInt(d);
         $("#lim").val(CurrentLimit);
-        ddd(CurrentSymbol, CurrentInterval, CurrentLimit);
+        getKlinesBina(CurrentSymbol, CurrentInterval, CurrentLimit);
     }
 
     function bntInt_Clicked(n) {
         $(".bntInterval div").removeClass("pressed");
         $("#b" + n).addClass("pressed");
         CurrentInterval = n < 60 ? n + "m" : "1h";
-        ddd(CurrentSymbol, CurrentInterval, CurrentLimit);
+        getKlinesBina(CurrentSymbol, CurrentInterval, CurrentLimit);
     }
 </script>
 
@@ -219,7 +219,7 @@
         $("#symbol").html(symbol);
         $(".symbols li").removeClass("selected");
         $("#id" + i).addClass("selected");
-        ddd(CurrentSymbol, CurrentInterval, CurrentLimit);
+        getKlinesBina(CurrentSymbol, CurrentInterval, CurrentLimit);
         bbb(symbol);
     }
 </script>
@@ -250,7 +250,7 @@
 
 <!-- API Binance: Свечи - получение данных -->
 <script>
-    function ddd(sym, inl, lim) {
+    function getKlinesBina(sym, inl, lim) {
         var url = "https://api.binance.com/api/v3/klines?"
                     + "symbol=" + sym + "&interval=" + inl + "&limit=" + lim;
 
@@ -286,7 +286,7 @@
 
             var i = ohlc.length - 1;
             if (ohlc[i].x <= Date.now() + 1000) {
-                ddd(CurrentSymbol, CurrentInterval, CurrentLimit);
+                getKlinesBina(CurrentSymbol, CurrentInterval, CurrentLimit);
             }
             else {
                 ohlc[i].c = k.c;
@@ -304,7 +304,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@^3"></script>
 <script src="https://cdn.jsdelivr.net/npm/luxon@^2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@^1"></script>
-<script src="chartjs/chartjs-chart-financial.js"></script>
+<script src="chartjs/financial.js"></script>
 
 <!-- График: подготовка данных -->
 <script>
