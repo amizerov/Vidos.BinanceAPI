@@ -1,13 +1,12 @@
-<!-- РџРѕР»СѓС‡Р°СЋ СѓР¶Рµ, РїСЂРµРґРІР°СЂРёС‚РµР»СЊРЅРѕ РѕС‚СЃРѕСЂС‚РёСЂРѕРІР°РЅРЅС‹Р№ 
-  -- СЃРїРёСЃРѕРє С‚РѕСЂРіРѕРІС‹С… РїР°СЂ СЃРѕ СЃРІРѕРµРіРѕ СЃРµСЂРІРµСЂР°, 
-  -- РіРґРµ РґР°РЅРЅС‹Рµ РїРѕР»СѓС‡Р°СЋС‚СЃСЏ СЃ Binance Рё Р°РЅР°Р»РёР·
-  -- РїСЂРѕРІРѕРґРёР»СЃСЏ РЅР° СЏР·С‹РєРµ C#
------------------------------------------------------->
-
-<!-- РЎС‚РёР»Рё -->
+<!--
+ Получаю уже, предварительно отсортированный писок торговых пар со своего сервера,
+ где данные получаются с Binance, Kucoin и Huobi с помощью библиотек на языке C#,
+ при этом производится анализ ликвидности пар и данные сохраняются в БД.
+-->
+<!-- Стили -->
 <style>
     .symbols {
-        width: 10em;
+        width: 9em;
         height: 31em;
         line-height: 2em;
         border: 1px solid #ccc;
@@ -31,7 +30,7 @@
     }
 
     .BinaTable {
-        width: 1000px;
+        width: 900px;
     }
 
         .BinaTable td {
@@ -55,22 +54,22 @@
         }
 
     .bntInterval {
-        color: aliceblue;
-    }
-    .bntInterval div {
-        width: 50px;
-        border: outset;
-        display: inline-block;
-        cursor: pointer;
     }
 
-        .bntInterval div:hover {
-            background-color: lightgray;
+        .bntInterval div {
+            width: 50px;
+            border: outset;
+            display: inline-block;
+            cursor: pointer;
         }
+
+            .bntInterval div:hover {
+                background-color: lightgray;
+            }
 
     .pressed {
         background-color: lightgray;
-        border: inset!important;
+        border: inset !important;
     }
 
     .Limit {
@@ -82,7 +81,7 @@
             border: outset;
             float: right;
             cursor: pointer;
-            text-align:center;
+            text-align: center;
         }
 
             .Limit div:hover {
@@ -97,45 +96,54 @@
         margin-left: 5px;
         text-align: center;
     }
+
     select {
         font: 18px arial, veranda;
         padding: 5px;
     }
+
+    #filterSymbol {
+        width: 9em;
+    }
 </style>
 
-<!-- Р Р°Р·РјРµС‚РєР° -->
+<!-- Разметка -->
 <center>
     <table class="BinaTable" border="1">
         <tr class="head">
-            <td>
+            <td width="1%">
                 <select id="Exchange" onchange="ExChan()">
                     <option>Binance</option>
                     <option>Kucoin</option>
                     <option>Huobi</option>
                 </select>
             </td>
-            <td>Open / Close</td><td>High / Low</td><td>Price / Volume</td>
+            <td>Open / Close</td>
+            <td>High / Low</td>
+            <td>Volume / Close time</td>
         </tr>
         <tr>
             <td rowspan="2" valign="top">
-                <input class="filterSymbol" />
-                <div class="info"><ul class="symbols" /></div>
+                <input id="filterSymbol" />
+                <div class="info"><ul class="symbols"></ul></div>
             </td>
             <td width="205px" valign="top">
-                <div id="opncls" />
+                <div id="opncls"></div>
             </td>
             <td width="205px" valign="top">
-                <div id="higlow" />
+                <div id="higlow"></div>
             </td>
             <td width="205px" valign="top" align="right">
-                <div id="volclt" />
+                <div id="volclt"></div>
             </td>
         </tr>
         <tr>
             <td colspan="3" valign="top">
-                <center><h1 id="symbol" /></center>
-                <canvas id="csChart" width="800" height="350"></canvas>
-                <canvas id="voChart" width="800" height="80"></canvas>
+                <center><h1 id="symbol"></h1></center>
+                <div id="chartPlace">
+                    <canvas id="csChart" width="900" height="350"></canvas>
+                    <canvas id="voChart" width="900" height="80"></canvas>
+                </div>
                 <div class="btnPanel">
                     <div class="bntInterval">
                         <div id="b1" onclick="bntInt_Clicked(1)">1m</div>
@@ -156,9 +164,12 @@
     </table>
 </center>
 
-<!-- jQuery: РїРѕРґРєР»СЋС‡РµРЅРёРµ Р±РёР±Р»РёРѕС‚РµРєРё СЂР°СЃС€РёСЂРµРЅРёСЏ РґР»СЏ JsvaScript -->
+<!-- jQuery: подключение библиотеки расширения для JsvaScript -->
 <script src="https://code.jquery.com/jquery-1.7.2.min.js"></script>
+
+<!-- Глобальные переменные и начальные значения -->
 <script>
+    var CurrentExchange = 1; // Binance
     var CurrentSymbol = "BTCUSDT";
     var CurrentInterval = "1m";
     var CurrentLimit = parseInt($("#lim").val());
@@ -168,7 +179,11 @@
         sel(0, CurrentSymbol);
         $("#b1").addClass("pressed");
     });
+</script>
 
+<!-- Управление параметрами графика -->
+<script>
+    // Вызывается при изменении выбора Биржи в комбооксе
     function ExChan() {
         var e = 1, ex = $('#Exchange option:selected').text();
         switch (ex) {
@@ -179,9 +194,11 @@
             default:
                 e = 3;
         }
+        // Получение отсортированного по ликвидности списка символов
         getSymbols(e);
     }
 
+    // Колличество свечей
     function setLim(d) {
         if (CurrentLimit >= 50 && d > 0 || CurrentLimit <= 5 && d < 0) return;
         CurrentLimit += parseInt(d);
@@ -189,6 +206,7 @@
         getKlinesBina(CurrentSymbol, CurrentInterval, CurrentLimit);
     }
 
+    // Интервал свечи на графике
     function bntInt_Clicked(n) {
         $(".bntInterval div").removeClass("pressed");
         $("#b" + n).addClass("pressed");
@@ -197,9 +215,9 @@
     }
 </script>
 
-<!-- Р¤РёР»СЊС‚СЂ СЃРёРјРІРѕР»РѕРІ -->
+<!-- Фильтр символов -->
 <script>
-    $(".filterSymbol").on("keyup", function (ev) {
+    $("#filterSymbol").on("keyup", function (ev) {
         var texto = $(this).val();
         filtro(texto);
     });
@@ -213,7 +231,7 @@
     }
 </script>
 
-<!-- Р’С‹Р±РѕСЂ СЃРёРјРІРѕР»Р° -->
+<!-- Выбор символа -->
 <script>
     function sel(i, symbol) {
         CurrentSymbol = symbol;
@@ -225,23 +243,24 @@
     }
 </script>
 
-<!-- API Mizer: РЎРїРёСЃРѕРє РїР°СЂ - РїРѕР»СѓС‡РµРЅРёРµ РґР°РЅРЅС‹С… -->
+<!-- Получение отсортированного по ликвидности списка пар
+     с любой из 3-х бирж по параметру из своей БД через свой Web API -->
 <script>
     function getSymbols(ex) {
         var url = "https://cryptoalert.mizerov.com/api/Products/" + ex;
 
-        //РћР±СЂР°С‰РµРЅРёРµ Р·Р° РґР°РЅРЅС‹РјРё РЅР° СЃРІРѕР№ СЃРµСЂРІРµСЂ
+        //Обращение за данными на свой сервер
         $.getJSON(url, function (data) {
 
-            //РџР°СЂСЃРёРЅРі - РїСЂРµРѕР±СЂР°Р·РѕРІР°РЅРёРµ РїРѕР»СѓС‡РµРЅРЅС‹С… РґР°РЅРЅС‹С… РІ РѕР±СЉРµРєС‚
+            //Парсинг - преобразование полученных данных в объект
             var paras = JSON.parse(JSON.stringify(data));
 
-            //РћС‡РёСЃС‚РёС‚СЊ СЃРїРёСЃРѕРє
+            //Очистить список
             $(".symbols").html("");
 
-            //Р—Р°РїРѕР»РЅРµРЅРёРµ СЃРїРёСЃРєР° СЃРёРјРІРѕР»РѕРІ РІ Р»РёСЃС‚Р±РѕРєСЃ
+            //Заполнение списка символов в листбокс
             $.each(paras, function (i, symInfo) {
-                var sym = symInfo.symbol;
+                var sym = symInfo.symbol.replace("-", "");
                 var sli = "<li id=id" + i + " onclick=\"sel(" + i + ", '" + sym + "')\">" + sym + "</li>";
                 $(".symbols").append(sli);
             });
@@ -249,11 +268,11 @@
     }
 </script>
 
-<!-- API Binance: РЎРІРµС‡Рё - РїРѕР»СѓС‡РµРЅРёРµ РґР°РЅРЅС‹С… -->
+<!-- API Binance: Свечи - получение данных -->
 <script>
     function getKlinesBina(sym, inl, lim) {
         var url = "https://api.binance.com/api/v3/klines?"
-                    + "symbol=" + sym + "&interval=" + inl + "&limit=" + lim;
+            + "symbol=" + sym + "&interval=" + inl + "&limit=" + lim;
 
         $.getJSON(url, function (data) {
             var Candles = JSON.parse(JSON.stringify(data));
@@ -265,7 +284,7 @@
     }
 </script>
 
-<!-- API Binance Socket: РџРѕСЃР»РµРґРЅСЏСЏ СЃРІРµС‡Р° - РїРѕР»СѓС‡РµРЅРёРµ РґР°РЅРЅС‹С… -->
+<!-- API Binance Socket: Последняя свеча - получение данных -->
 <script>
     var binaSocket = null;
 
@@ -283,7 +302,7 @@
             var k = obj.k;
             $("#opncls").html(k.o + " / " + k.c);
             $("#higlow").html(k.h + " / " + k.l);
-            $("#volclt").html(k.c + " / " + k.v); // + (new Date(k.T + 1)).toLocaleTimeString().substr(0, 5));
+            $("#volclt").html(k.v + " / " + (new Date(k.T + 1)).toLocaleTimeString().substr(0, 5));
 
             var i = ohlc.length - 1;
             if (ohlc[i].x <= Date.now() + 1000) {
@@ -301,13 +320,13 @@
     }
 </script>
 
-<!-- Р“СЂР°С„РёРє: РїРѕРґРєР»СЋС‡РµРЅРёРµ Р±РёР±Р»РёРѕС‚РµРє РґР»СЏ С„РёРЅР°РЅСЃРѕРІРѕРіРѕ РіСЂР°С„РёРєР° -->
+<!-- График: подключение библиотек для финансового графика -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@^3"></script>
 <script src="https://cdn.jsdelivr.net/npm/luxon@^2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@^1"></script>
-<script src="chartjs/financial.js"></script>
+<script src="../chartjs/financial.js"></script>
 
-<!-- Р“СЂР°С„РёРє: РїРѕРґРіРѕС‚РѕРІРєР° РґР°РЅРЅС‹С… -->
+<!-- График: подготовка данных -->
 <script>
     var ohlc = [];
     var vols = [];
@@ -339,7 +358,7 @@
     }
 </script>
 
-<!-- Р“СЂР°С„РёРє: РѕС‚СЂРёСЃРѕРІРєР° -->
+<!-- График: отрисовка -->
 <script>
     var csChart = null;
     var voChart = null;
@@ -348,11 +367,17 @@
 
         Chart.defaults.plugins.legend.display = false;
 
+        //if (csChart instanceof Chart) csChart.destroy();
+        //if (voChart instanceof Chart) voChart.destroy();
+        // По хорошему не хочет оищатьсья Канвас
+        // Делаем по плохому
+        $('#csChart').remove();
+        $('#voChart').remove();
+        $('#chartPlace').append('<canvas id="csChart" width="900" height="350"></canvas>');
+        $('#chartPlace').append('<canvas id="voChart" width="900" height="80"></canvas>');
+
         const ctx1 = document.getElementById('csChart').getContext('2d');
         const ctx2 = document.getElementById('voChart').getContext('2d');
-
-        if (csChart != null) csChart.destroy();
-        if (voChart != null) voChart.destroy();
 
         csChart = new Chart(ctx1, {
             type: 'candlestick',
